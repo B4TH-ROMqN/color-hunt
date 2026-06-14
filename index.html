@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -167,41 +167,40 @@
   
   <div id="resultCard">
     <div class="color-panel" id="colorPanel">
-      <span id="colorName">お散歩をスタートしてください</span>
+      <span id="colorName">Tap "Start Walk" to Begin</span>
       <span id="colorHex"></span>
     </div>
 
     <div class="stats">
-      <div>距離: <span id="distVal">0.0</span> km</div>
-      <div>写真: <span id="photoCount">0</span> 枚</div>
+      <div>Distance: <span id="distVal">0.0</span> km</div>
+      <div>Photos: <span id="photoCount">0</span></div>
     </div>
 
     <div class="gallery" id="gallery"></div>
   </div>
 
   <div style="margin-top: 20px;">
-    <button class="btn-primary" id="startBtn">お散歩を開始する</button>
+    <button class="btn-primary" id="startBtn">Start Walk</button>
     
     <label for="imageInput" id="captureLabel" style="display:none;">
-      <span class="btn-action">色を見つけて写真を撮る</span>
+      <span class="btn-action">Find Color & Take Photo</span>
     </label>
     <input type="file" id="imageInput" accept="image/*" capture="environment">
 
-    <button class="btn-success" id="saveImgBtn" style="display:none;">リザルトを画像として保存</button>
-    <button class="btn-secondary" id="clearBtn">データをすべて削除（即時）</button>
+    <button class="btn-success" id="saveImgBtn" style="display:none;">Save Result as Image</button>
+    <button class="btn-secondary" id="clearBtn">Clear All Data</button>
   </div>
 </div>
 
 <div class="modal" id="imageModal">
   <img class="modal-content" id="generatedImage" src="" alt="Result">
-  <div class="modal-text">画像を長押しして「画像をダウンロード」を選択してください</div>
-  <button class="btn-secondary" id="closeModalBtn" style="margin-top:20px; width:auto; padding:10px 30px;">閉じる</button>
+  <div class="modal-text">Long press the image to save to your device</div>
+  <button class="btn-secondary" id="closeModalBtn" style="margin-top:20px; width:auto; padding:10px 30px;">Close</button>
 </div>
 
 <script>
-  // 修正：画面上のログ表示を廃止し、ブラウザの内部コンソールにのみ出力するよう変更
   function logError(msg) {
-    console.error("【エラー発生】:\n" + msg);
+    console.error("【Error】:\n" + msg);
   }
 
   window.onerror = function(message, source, lineno, colno, error) {
@@ -209,10 +208,11 @@
     return false;
   };
 
+  // 修正箇所：色名を英語に変更
   const colors = [
-    { name: '', hex: '#ff0000', isDark: true },
-    { name: 'Blue, hex: '#0000ff', isDark: true },
-    { name: 'Yellow, hex: '#ffff00', isDark: false },
+    { name: 'Red', hex: '#ff0000', isDark: true },
+    { name: 'Blue', hex: '#0000ff', isDark: true },
+    { name: 'Yellow', hex: '#ffff00', isDark: false },
     { name: 'Green', hex: '#008000', isDark: true },
     { name: 'Orange', hex: '#ffa500', isDark: true },
     { name: 'Purple', hex: '#800080', isDark: true },
@@ -261,14 +261,15 @@
         if (targetColor) {
           colorPanel.style.backgroundColor = targetColor.hex;
           colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
-          colorName.textContent = `【ハント達成】${targetColor.name}`;
+          // 修正箇所：英語テキスト
+          colorName.textContent = `[Hunted] ${targetColor.name}`;
           colorHex.textContent = '';
           saveImgBtn.style.display = 'block';
         }
         photoDataUrls.forEach(src => addImageToTile(src));
       }
     } catch (e) {
-      logError("データ復元失敗: " + e.message);
+      logError("Restore failed: " + e.message);
     }
   });
 
@@ -282,7 +283,7 @@
       };
       localStorage.setItem('color_hunt_walk_log', JSON.stringify(data));
     } catch (e) {
-      logError("データ保存失敗（容量オーバーの可能性）: " + e.message);
+      logError("Save failed: " + e.message);
     }
   }
 
@@ -290,7 +291,8 @@
     targetColor = colors[Math.floor(Math.random() * colors.length)];
     colorPanel.style.backgroundColor = targetColor.hex;
     colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
-    colorName.textContent = `ターゲット：${targetColor.name}`;
+    // 修正箇所：英語テキスト
+    colorName.textContent = `Target: ${targetColor.name}`;
     colorHex.textContent = '';
     saveData();
   }
@@ -337,19 +339,22 @@
       saveImgBtn.style.display = 'none';
       pickColor();
       startTracking();
-      startBtn.textContent = 'お散歩を終了する';
+      // 修正箇所：ボタン英語化
+      startBtn.textContent = 'Stop Walk';
       startBtn.classList.replace('btn-primary', 'btn-secondary');
       captureLabel.style.display = 'block';
     } else {
       isWalking = false;
       stopTracking();
-      startBtn.textContent = '新しくお散歩を開始する';
+      // 修正箇所：ボタン英語化
+      startBtn.textContent = 'Start New Walk';
       startBtn.classList.replace('btn-secondary', 'btn-primary');
       captureLabel.style.display = 'none';
       saveImgBtn.style.display = 'block';
       
       if (targetColor) {
-        colorName.textContent = `【ハント達成】${targetColor.name}`;
+        // 修正箇所：英語テキスト
+        colorName.textContent = `[Hunted] ${targetColor.name}`;
       }
       colorHex.textContent = '';
       saveData();
@@ -405,7 +410,7 @@
     const target = document.getElementById('resultCard');
     
     if (typeof html2canvas === 'undefined') {
-      logError("html2canvas ライブラリが読み込まれていません。");
+      logError("html2canvas library is not loaded.");
       return;
     }
 
@@ -413,7 +418,7 @@
       generatedImage.src = canvas.toDataURL('image/png');
       imageModal.style.display = 'flex';
     }).catch(err => {
-      logError("画像生成エラー: " + err.message);
+      logError("Image generation error: " + err.message);
     });
   });
 
