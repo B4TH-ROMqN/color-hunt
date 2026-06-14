@@ -158,20 +158,6 @@
       font-size: 0.9rem;
       text-align: center;
     }
-    
-    .debug-console {
-      width: 100%;
-      max-width: 500px;
-      margin-top: 20px;
-      padding: 10px;
-      background: #343a40;
-      color: #ffc107;
-      font-family: monospace;
-      font-size: 0.8rem;
-      border-radius: 8px;
-      box-sizing: border-box;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 <body>
@@ -212,13 +198,10 @@
   <button class="btn-secondary" id="closeModalBtn" style="margin-top:20px; width:auto; padding:10px 30px;">閉じる</button>
 </div>
 
-<div class="debug-console" id="debugConsole">システムログ: 正常稼働中</div>
-
 <script>
+  // 修正：画面上のログ表示を廃止し、ブラウザの内部コンソールにのみ出力するよう変更
   function logError(msg) {
-    const consoleEl = document.getElementById('debugConsole');
-    consoleEl.textContent = "【エラー発生】:\n" + msg;
-    consoleEl.style.color = "#ff6b6b";
+    console.error("【エラー発生】:\n" + msg);
   }
 
   window.onerror = function(message, source, lineno, colno, error) {
@@ -227,14 +210,14 @@
   };
 
   const colors = [
-    { name: '赤色（レッド）', hex: '#ff0000', isDark: true },
-    { name: '青色（ブルー）', hex: '#0000ff', isDark: true },
-    { name: '黄色（イエロー）', hex: '#ffff00', isDark: false },
-    { name: '緑色（グリーン）', hex: '#008000', isDark: true },
-    { name: '橙色（オレンジ）', hex: '#ffa500', isDark: true },
-    { name: '紫色（パープル）', hex: '#800080', isDark: true },
-    { name: '白色（ホワイト）', hex: '#ffffff', isDark: false },
-    { name: '黒色（ブラック）', hex: '#000000', isDark: true }
+    { name: '', hex: '#ff0000', isDark: true },
+    { name: 'Blue, hex: '#0000ff', isDark: true },
+    { name: 'Yellow, hex: '#ffff00', isDark: false },
+    { name: 'Green', hex: '#008000', isDark: true },
+    { name: 'Orange', hex: '#ffa500', isDark: true },
+    { name: 'Purple', hex: '#800080', isDark: true },
+    { name: 'White', hex: '#ffffff', isDark: false },
+    { name: 'Black', hex: '#000000', isDark: true }
   ];
 
   let isWalking = false;
@@ -278,8 +261,8 @@
         if (targetColor) {
           colorPanel.style.backgroundColor = targetColor.hex;
           colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
-          colorName.textContent = `前回のターゲット：${targetColor.name}`;
-          colorHex.textContent = ''; // 修正：前回復元時もカラーコードは非表示
+          colorName.textContent = `【ハント達成】${targetColor.name}`;
+          colorHex.textContent = '';
           saveImgBtn.style.display = 'block';
         }
         photoDataUrls.forEach(src => addImageToTile(src));
@@ -303,13 +286,12 @@
     }
   }
 
-  // 修正：色の選出時にカラーコードを書き込まない（空文字にする）
   function pickColor() {
     targetColor = colors[Math.floor(Math.random() * colors.length)];
     colorPanel.style.backgroundColor = targetColor.hex;
     colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
     colorName.textContent = `ターゲット：${targetColor.name}`;
-    colorHex.textContent = ''; // 修正箇所
+    colorHex.textContent = '';
     saveData();
   }
 
@@ -366,11 +348,10 @@
       captureLabel.style.display = 'none';
       saveImgBtn.style.display = 'block';
       
-      // お散歩終了時のみ、ここに移動距離を表示
-      colorPanel.style.backgroundColor = '#e9ecef';
-      colorPanel.style.color = '#212529';
-      colorName.textContent = 'おつかれさまでした！';
-      colorHex.textContent = `総移動距離: ${totalDistance.toFixed(2)} km`;
+      if (targetColor) {
+        colorName.textContent = `【ハント達成】${targetColor.name}`;
+      }
+      colorHex.textContent = '';
       saveData();
     }
   });
@@ -385,6 +366,7 @@
     
     const delBtn = document.createElement('div');
     delBtn.classList.add('delete-btn');
+    delBtn.setAttribute('data-html2canvas-ignore', 'true');
     delBtn.innerHTML = '×';
     
     delBtn.addEventListener('click', (e) => {
