@@ -167,7 +167,7 @@
   
   <div id="resultCard">
     <div class="color-panel" id="colorPanel">
-      <span id="colorName">Tap "Start Walk" to Begin</span>
+      <span id="colorName">カラーハントを開始してください</span>
       <span id="colorHex"></span>
     </div>
 
@@ -208,7 +208,6 @@
     return false;
   };
 
-  // 修正箇所：色名を英語に変更
   const colors = [
     { name: 'Red', hex: '#ff0000', isDark: true },
     { name: 'Blue', hex: '#0000ff', isDark: true },
@@ -261,7 +260,6 @@
         if (targetColor) {
           colorPanel.style.backgroundColor = targetColor.hex;
           colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
-          // 修正箇所：英語テキスト
           colorName.textContent = `[Hunted] ${targetColor.name}`;
           colorHex.textContent = '';
           saveImgBtn.style.display = 'block';
@@ -291,7 +289,6 @@
     targetColor = colors[Math.floor(Math.random() * colors.length)];
     colorPanel.style.backgroundColor = targetColor.hex;
     colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
-    // 修正箇所：英語テキスト
     colorName.textContent = `Target: ${targetColor.name}`;
     colorHex.textContent = '';
     saveData();
@@ -339,21 +336,18 @@
       saveImgBtn.style.display = 'none';
       pickColor();
       startTracking();
-      // 修正箇所：ボタン英語化
       startBtn.textContent = 'Stop Walk';
       startBtn.classList.replace('btn-primary', 'btn-secondary');
       captureLabel.style.display = 'block';
     } else {
       isWalking = false;
       stopTracking();
-      // 修正箇所：ボタン英語化
       startBtn.textContent = 'Start New Walk';
       startBtn.classList.replace('btn-secondary', 'btn-primary');
       captureLabel.style.display = 'none';
       saveImgBtn.style.display = 'block';
       
       if (targetColor) {
-        // 修正箇所：英語テキスト
         colorName.textContent = `[Hunted] ${targetColor.name}`;
       }
       colorHex.textContent = '';
