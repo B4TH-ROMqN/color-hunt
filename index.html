@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ColorHunt">
+  
+  <title>Color Hunt Walk</title>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #f8f9fa;
+      --text-color: #212529;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      box-sizing: border-box;
+    }
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-top: 0;
+      letter-spacing: 1px;
+    }
+    
+    #resultCard {
+      background: white;
+      padding: 10px;
+      border-radius: 16px;
+    }
+    
+    .color-panel {
+      width: 100%;
+      height: 120px;
+      border-radius: 16px;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #212529;
+      font-weight: bold;
+      transition: background-color 0.3s, color 0.3s;
+      background-color: #e9ecef;
+      border: 1px solid #dee2e6;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      background: #f1f3f5;
+      padding: 12px 20px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+    
+    button, .btn-action, .btn-success {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 10px;
+      cursor: pointer;
+      text-align: center;
+      box-sizing: border-box;
+      text-decoration: none;
+    }
+    .btn-primary { background-color: #212529; color: white; }
+    .btn-secondary { background-color: #e9ecef; color: #495057; }
+    .btn-action { background-color: #0d6efd; color: white; }
+    .btn-success { background-color: #198754; color: white; }
+    button:active, .btn-action:active { opacity: 0.8; }
+    
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 15px;
+    }
+    .gallery-item {
+      width: 100%;
+      padding-top: 100%;
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f1f3f5;
+      border: 1px solid #dee2e6;
+    }
+    .gallery-item img {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    
+    .delete-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 20px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 10;
+    }
+    
+    #imageInput { display: none; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .modal-content {
+      max-width: 100%;
+      max-height: 70%;
+      border-radius: 12px;
+      background: white;
+    }
+    .modal-text {
+      color: white;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    
+    .debug-console {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+      padding: 10px;
+      background: #343a40;
+      color: #ffc107;
+      font-family: monospace;
+      font-size: 0.8rem;
+      border-radius: 8px;
+      box-sizing: border-box;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Color Hunt Walk</h1>
+  
+  <div id="resultCard">
+    <div class="color-panel" id="colorPanel">
+      <span id="colorName">お散歩をスタートしてください</span>
+      <span id="colorHex"></span>
+    </div>
+
+    <div class="stats">
+      <div>距離: <span id="distVal">0.0</span> km</div>
+      <div>写真: <span id="photoCount">0</span> 枚</div>
+    </div>
+
+    <div class="gallery" id="gallery"></div>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button class="btn-primary" id="startBtn">お散歩を開始する</button>
+    
+    <label for="imageInput" id="captureLabel" style="display:none;">
+      <span class="btn-action">色を見つけて写真を撮る</span>
+    </label>
+    <input type="file" id="imageInput" accept="image/*" capture="environment">
+
+    <button class="btn-success" id="saveImgBtn" style="display:none;">リザルトを画像として保存</button>
+    <button class="btn-secondary" id="clearBtn">データをすべて削除（即時）</button>
+  </div>
+</div>
+
+<div class="modal" id="imageModal">
+  <img class="modal-content" id="generatedImage" src="" alt="Result">
+  <div class="modal-text">画像を長押しして「画像をダウンロード」を選択してください</div>
+  <button class="btn-secondary" id="closeModalBtn" style="margin-top:20px; width:auto; padding:10px 30px;">閉じる</button>
+</div>
+
+<div class="debug-console" id="debugConsole">システムログ: 正常稼働中</div>
+
+<script>
+  function logError(msg) {
+    const consoleEl = document.getElementById('debugConsole');
+    consoleEl.textContent = "【エラー発生】:\n" + msg;
+    consoleEl.style.color = "#ff6b6b";
+  }
+
+  window.onerror = function(message, source, lineno, colno, error) {
+    logError(`${message}\nLine: ${lineno}`);
+    return false;
+  };
+
+  const colors = [
+    { name: '赤色（レッド）', hex: '#ff0000', isDark: true },
+    { name: '青色（ブルー）', hex: '#0000ff', isDark: true },
+    { name: '黄色（イエロー）', hex: '#ffff00', isDark: false },
+    { name: '緑色（グリーン）', hex: '#008000', isDark: true },
+    { name: '橙色（オレンジ）', hex: '#ffa500', isDark: true },
+    { name: '紫色（パープル）', hex: '#800080', isDark: true },
+    { name: '白色（ホワイト）', hex: '#ffffff', isDark: false },
+    { name: '黒色（ブラック）', hex: '#000000', isDark: true }
+  ];
+
+  let isWalking = false;
+  let targetColor = null;
+  let watchId = null;
+  let totalDistance = 0;
+  let lastPosition = null;
+  let photoTotal = 0;
+  let photoDataUrls = [];
+
+  const colorPanel = document.getElementById('colorPanel');
+  const colorName = document.getElementById('colorName');
+  const colorHex = document.getElementById('colorHex');
+  const startBtn = document.getElementById('startBtn');
+  const captureLabel = document.getElementById('captureLabel');
+  const saveImgBtn = document.getElementById('saveImgBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const imageInput = document.getElementById('imageInput');
+  const gallery = document.getElementById('gallery');
+  const distVal = document.getElementById('distVal');
+  const photoCount = document.getElementById('photoCount');
+  
+  const imageModal = document.getElementById('imageModal');
+  const generatedImage = document.getElementById('generatedImage');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+
+  // データ復元
+  window.addEventListener('load', () => {
+    try {
+      const savedData = localStorage.getItem('color_hunt_walk_log');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        totalDistance = data.distance || 0;
+        photoTotal = data.photoCount || 0;
+        photoDataUrls = data.photos || [];
+        targetColor = data.targetColor || null;
+
+        distVal.textContent = totalDistance.toFixed(2);
+        photoCount.textContent = photoTotal;
+
+        if (targetColor) {
+          colorPanel.style.backgroundColor = targetColor.hex;
+          colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
+          colorName.textContent = `前回のターゲット：${targetColor.name}`;
+          colorHex.textContent = ''; // 修正：前回復元時もカラーコードは非表示
+          saveImgBtn.style.display = 'block';
+        }
+        photoDataUrls.forEach(src => addImageToTile(src));
+      }
+    } catch (e) {
+      logError("データ復元失敗: " + e.message);
+    }
+  });
+
+  function saveData() {
+    try {
+      const data = {
+        distance: totalDistance,
+        photoCount: photoTotal,
+        photos: photoDataUrls,
+        targetColor: targetColor
+      };
+      localStorage.setItem('color_hunt_walk_log', JSON.stringify(data));
+    } catch (e) {
+      logError("データ保存失敗（容量オーバーの可能性）: " + e.message);
+    }
+  }
+
+  // 修正：色の選出時にカラーコードを書き込まない（空文字にする）
+  function pickColor() {
+    targetColor = colors[Math.floor(Math.random() * colors.length)];
+    colorPanel.style.backgroundColor = targetColor.hex;
+    colorPanel.style.color = targetColor.isDark ? '#ffffff' : '#000000';
+    colorName.textContent = `ターゲット：${targetColor.name}`;
+    colorHex.textContent = ''; // 修正箇所
+    saveData();
+  }
+
+  function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function startTracking() {
+    if (!navigator.geolocation) return;
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (lastPosition) {
+          const d = calculateDistance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
+          if (d > 0.01) {
+            totalDistance += d;
+            distVal.textContent = totalDistance.toFixed(2);
+            saveData();
+          }
+        }
+        lastPosition = { latitude, longitude };
+      },
+      (error) => console.error(error),
+      { enableHighAccuracy: true, distanceFilter: 10 }
+    );
+  }
+
+  function stopTracking() {
+    if (watchId) navigator.geolocation.clearWatch(watchId);
+    lastPosition = null;
+  }
+
+  startBtn.addEventListener('click', () => {
+    if (!isWalking) {
+      isWalking = true;
+      saveImgBtn.style.display = 'none';
+      pickColor();
+      startTracking();
+      startBtn.textContent = 'お散歩を終了する';
+      startBtn.classList.replace('btn-primary', 'btn-secondary');
+      captureLabel.style.display = 'block';
+    } else {
+      isWalking = false;
+      stopTracking();
+      startBtn.textContent = '新しくお散歩を開始する';
+      startBtn.classList.replace('btn-secondary', 'btn-primary');
+      captureLabel.style.display = 'none';
+      saveImgBtn.style.display = 'block';
+      
+      // お散歩終了時のみ、ここに移動距離を表示
+      colorPanel.style.backgroundColor = '#e9ecef';
+      colorPanel.style.color = '#212529';
+      colorName.textContent = 'おつかれさまでした！';
+      colorHex.textContent = `総移動距離: ${totalDistance.toFixed(2)} km`;
+      saveData();
+    }
+  });
+
+  function addImageToTile(src) {
+    const item = document.createElement('div');
+    item.classList.add('gallery-item');
+    
+    const img = document.createElement('img');
+    img.src = src;
+    item.appendChild(img);
+    
+    const delBtn = document.createElement('div');
+    delBtn.classList.add('delete-btn');
+    delBtn.innerHTML = '×';
+    
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      item.remove();
+      const index = photoDataUrls.indexOf(src);
+      if (index > -1) {
+        photoDataUrls.splice(index, 1);
+      }
+      photoTotal--;
+      photoCount.textContent = photoTotal;
+      saveData();
+    });
+    
+    item.appendChild(delBtn);
+    gallery.appendChild(item);
+  }
+
+  imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const src = event.target.result;
+      addImageToTile(src);
+      photoDataUrls.push(src);
+      photoTotal++;
+      photoCount.textContent = photoTotal;
+      saveData();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  saveImgBtn.addEventListener('click', () => {
+    const target = document.getElementById('resultCard');
+    
+    if (typeof html2canvas === 'undefined') {
+      logError("html2canvas ライブラリが読み込まれていません。");
+      return;
+    }
+
+    html2canvas(target, { useCORS: true, scale: 1.5 }).then(canvas => {
+      generatedImage.src = canvas.toDataURL('image/png');
+      imageModal.style.display = 'flex';
+    }).catch(err => {
+      logError("画像生成エラー: " + err.message);
+    });
+  });
+
+  closeModalBtn.addEventListener('click', () => {
+    imageModal.style.display = 'none';
+  });
+
+  clearBtn.addEventListener('click', () => {
+    localStorage.removeItem('color_hunt_walk_log');
+    location.reload();
+  });
+</script>
+
+</body>
+</html>
